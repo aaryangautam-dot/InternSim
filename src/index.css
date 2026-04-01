@@ -739,6 +739,7 @@ textarea.input {
   border-radius: var(--radius-lg);
   border: 2px solid var(--border);
   background: var(--bg-card);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
   text-align: left;
@@ -771,6 +772,7 @@ textarea.input {
 .role-option .role-text h3 {
   font-size: 1rem;
   margin-bottom: 2px;
+  color: var(--text-primary);
 }
 
 .role-option .role-text p {
@@ -1126,18 +1128,191 @@ textarea.input {
   color: var(--text-secondary);
 }
 
+/* ========== MOBILE HAMBURGER ========== */
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+
+.mobile-menu-btn:hover {
+  background: var(--accent-muted);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+}
+
+.sidebar-overlay.visible {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+
   .sidebar {
     transform: translateX(-100%);
     width: 280px;
+    z-index: 200;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sidebar.open { transform: translateX(0); }
-  .main-content { margin-left: 0; }
-  .page-content { padding: 16px; }
-  .editor-layout { flex-direction: column; }
-  .editor-instructions { width: 100%; min-width: auto; max-height: 40vh; }
-  .chat-bubble { max-width: 90%; }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .page-content {
+    padding: 16px;
+  }
+
+  /* Onboarding mobile */
+  .onboarding-container {
+    padding: 16px;
+  }
+
+  .onboarding-card {
+    max-width: 100%;
+  }
+
+  .onboarding-card h1 {
+    font-size: 1.6rem;
+  }
+
+  .role-option {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .role-option .role-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Task cards mobile */
+  .task-card {
+    padding: 14px 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .task-card .task-meta {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .task-card .task-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* Editor mobile */
+  .editor-layout {
+    flex-direction: column;
+  }
+
+  .editor-instructions {
+    width: 100%;
+    min-width: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Chat mobile */
+  .chat-bubble {
+    max-width: 90%;
+  }
+
+  .chat-input-area {
+    padding: 12px 16px;
+  }
+
+  /* Stats mobile */
+  .stat-card {
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Modal mobile */
+  .modal {
+    width: 95%;
+    padding: 20px;
+  }
+
+  /* Settings mobile */
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Rank progression mobile */
+  .rank-progression {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .rank-node .rank-circle {
+    width: 44px;
+    height: 44px;
+  }
+
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+}
+
+@media (max-width: 480px) {
+  .onboarding-card h1 {
+    font-size: 1.3rem;
+  }
+
+  .onboarding-card .subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  .btn-lg {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  .page-content {
+    padding: 12px;
+  }
+
+  .topbar h2 {
+    font-size: 1rem;
+  }
 }
 
 /* ========== DEADLINE INDICATOR ========== */

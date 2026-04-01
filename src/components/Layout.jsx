@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useUser } from '../contexts/UserContext';
 import { useTasks } from '../contexts/TaskContext';
 import {
   LayoutDashboard, ListChecks, MessageSquare, TrendingUp,
-  Settings, Sun, Moon, Zap
+  Settings, Sun, Moon, Zap, Menu, X
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -20,14 +21,26 @@ export default function Layout({ children }) {
   const { user } = useUser();
   const { getCompletedCount, TASKS: allTasks } = useTasks();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   const pageTitle = NAV_ITEMS.find(n => location.pathname.startsWith(n.to))?.label
     || (location.pathname.includes('/task/') ? 'Task' : 'InternSim');
 
   return (
     <div className="app-layout">
+      {/* Mobile overlay */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <div className="logo-icon">
             <Zap size={20} />
@@ -70,6 +83,13 @@ export default function Layout({ children }) {
       <main className="main-content">
         <header className="topbar">
           <div className="topbar-left">
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle menu"
+            >
+              {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
             <h2>{pageTitle}</h2>
           </div>
           <div className="topbar-right">

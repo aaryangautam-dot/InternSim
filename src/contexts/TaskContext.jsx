@@ -1,14 +1,23 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { TASKS } from '../data/tasks';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { TASKS as ALL_TASKS } from '../data/tasks';
+import { useUser } from './UserContext';
 
 const TaskContext = createContext();
 
-const initializeTaskStates = () => {
+const initializeTaskStates = (tasks) => {
   const saved = localStorage.getItem('internsim-tasks');
-  if (saved) return JSON.parse(saved);
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    // Only use saved state if tasks match (same role)
+    const savedIds = Object.keys(parsed);
+    const taskIds = tasks.map(t => t.id);
+    if (taskIds.length > 0 && taskIds.every(id => savedIds.includes(id))) {
+      return parsed;
+    }
+  }
 
   const states = {};
-  TASKS.forEach((task, index) => {
+  tasks.forEach((task, index) => {
     states[task.id] = {
       status: index === 0 ? 'available' : 'locked',
       code: task.starterCode,
@@ -26,7 +35,27 @@ const initializeTaskStates = () => {
 };
 
 export function TaskProvider({ children }) {
-  const [taskStates, setTaskStates] = useState(initializeTaskStates);
+  const { user } = useUser();
+
+  // Filter tasks by user's selected role
+  const TASKS = useMemo(() => {
+    if (!user.role) return ALL_TASKS.filter(t => t.role === 'frontend');
+    return ALL_TASKS.filter(t => t.role === user.role);
+  }, [user.role]);
+
+  const [taskStates, setTaskStates] = useState(() => initializeTaskStates(TASKS));
+
+  // Re-initialize when role/tasks change
+  useEffect(() => {
+    const taskIds = TASKS.map(t => t.id);
+    const stateIds = Object.keys(taskStates);
+    const needsReinit = taskIds.length > 0 && !taskIds.every(id => stateIds.includes(id));
+    if (needsReinit) {
+      const fresh = initializeTaskStates(TASKS);
+      setTaskStates(fresh);
+      localStorage.setItem('internsim-tasks', JSON.stringify(fresh));
+    }
+  }, [TASKS]);
 
   useEffect(() => {
     localStorage.setItem('internsim-tasks', JSON.stringify(taskStates));
@@ -55,7 +84,7 @@ export function TaskProvider({ children }) {
   const submitTask = (taskId, code, feedback) => {
     const state = taskStates[taskId];
     const startedAt = state?.startedAt ? new Date(state.startedAt) : new Date();
-    const timeTaken = Math.round((Date.now() - startedAt.getTime()) / 1000 / 60); // minutes
+    const timeTaken = Math.round((Date.now() - startedAt.getTime()) / 1000 / 60);
 
     const task = TASKS.find(t => t.id === taskId);
     const isLate = task && timeTaken > task.deadlineMinutes;
@@ -93,7 +122,6 @@ export function TaskProvider({ children }) {
         },
       };
 
-      // Unlock next task if passed
       if (passed) {
         const currentIndex = TASKS.findIndex(t => t.id === taskId);
         if (currentIndex < TASKS.length - 1) {
