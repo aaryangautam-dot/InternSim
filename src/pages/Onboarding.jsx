@@ -13,16 +13,14 @@ const ROLES = [
   {
     id: 'backend',
     title: 'Backend Developer',
-    desc: 'APIs, databases, server-side logic (Coming Soon)',
+    desc: 'APIs, databases, server-side logic',
     icon: Server,
-    disabled: true,
   },
   {
     id: 'aiml',
     title: 'AI/ML Intern',
-    desc: 'Machine learning, data processing (Coming Soon)',
+    desc: 'Machine learning, data processing',
     icon: Brain,
-    disabled: true,
   },
 ];
 
@@ -110,9 +108,7 @@ export default function Onboarding() {
                 <button
                   key={r.id}
                   className={`role-option ${role === r.id ? 'selected' : ''}`}
-                  onClick={() => !r.disabled && setRole(r.id)}
-                  disabled={r.disabled}
-                  style={r.disabled ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                  onClick={() => setRole(r.id)}
                 >
                   <div className="role-icon">
                     <r.icon size={22} />
