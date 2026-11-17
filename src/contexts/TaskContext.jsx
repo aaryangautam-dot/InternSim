@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { TASKS as ALL_TASKS } from '../data/tasks';
+import { COMPANIES, getCompanyById, getCompanyForTask } from '../data/companies';
 import { useUser } from './UserContext';
 
 const TaskContext = createContext();
@@ -7,12 +8,15 @@ const TaskContext = createContext();
 const initializeTaskStates = (tasks) => {
   const saved = localStorage.getItem('internsim-tasks');
   if (saved) {
-    const parsed = JSON.parse(saved);
-    // Only use saved state if tasks match (same role)
-    const savedIds = Object.keys(parsed);
-    const taskIds = tasks.map(t => t.id);
-    if (taskIds.length > 0 && taskIds.every(id => savedIds.includes(id))) {
-      return parsed;
+    try {
+      const parsed = JSON.parse(saved);
+      const savedIds = Object.keys(parsed);
+      const taskIds = tasks.map(t => t.id);
+      if (taskIds.length > 0 && taskIds.every(id => savedIds.includes(id))) {
+        return parsed;
+      }
+    } catch {
+      // fallback
     }
   }
 
@@ -35,33 +39,54 @@ const initializeTaskStates = (tasks) => {
 };
 
 export function TaskProvider({ children }) {
-  const { user } = useUser();
+  const { user, unlockCompany } = useUser();
+
+  const userRole = user?.role || 'frontend';
 
   // Filter tasks by user's selected role
   const TASKS = useMemo(() => {
-    if (!user.role) return ALL_TASKS.filter(t => t.role === 'frontend');
-    return ALL_TASKS.filter(t => t.role === user.role);
-  }, [user.role]);
+    return ALL_TASKS.filter(t => t.role === userRole);
+  }, [userRole]);
 
+  const [prevRole, setPrevRole] = useState(userRole);
   const [taskStates, setTaskStates] = useState(() => initializeTaskStates(TASKS));
 
-  // Re-initialize when role/tasks change
-  useEffect(() => {
-    const taskIds = TASKS.map(t => t.id);
-    const stateIds = Object.keys(taskStates);
-    const needsReinit = taskIds.length > 0 && !taskIds.every(id => stateIds.includes(id));
-    if (needsReinit) {
-      const fresh = initializeTaskStates(TASKS);
-      setTaskStates(fresh);
-      localStorage.setItem('internsim-tasks', JSON.stringify(fresh));
-    }
-  }, [TASKS]);
+  // Adjust state during render when role changes
+  if (prevRole !== userRole) {
+    setPrevRole(userRole);
+    const fresh = initializeTaskStates(TASKS);
+    setTaskStates(fresh);
+    localStorage.setItem('internsim-tasks', JSON.stringify(fresh));
+  }
 
   useEffect(() => {
     localStorage.setItem('internsim-tasks', JSON.stringify(taskStates));
   }, [taskStates]);
 
   const getTaskState = (taskId) => taskStates[taskId] || {};
+
+  const checkPromotionEligibility = (companyId, customStates = taskStates) => {
+    const company = getCompanyById(companyId);
+    if (!company || !company.promotionCriteria?.nextCompanyId) return { eligible: false };
+
+    const targetTaskIds = company.taskIdsByRole[userRole] || [];
+    const completedTasks = targetTaskIds.filter(id => customStates[id]?.status === 'completed');
+
+    const totalScore = completedTasks.reduce((sum, id) => sum + (customStates[id]?.rating || 0), 0);
+    const avgScore = completedTasks.length > 0 ? (totalScore / completedTasks.length) : 0;
+    const hasEnoughTasks = completedTasks.length >= company.promotionCriteria.minTasksCompleted;
+    const eligible = hasEnoughTasks && avgScore >= company.promotionCriteria.minAverageScore;
+
+    return {
+      eligible,
+      completedCount: completedTasks.length,
+      totalRequired: company.promotionCriteria.minTasksCompleted,
+      avgScore: Math.round(avgScore * 10) / 10,
+      minAverageScore: company.promotionCriteria.minAverageScore,
+      nextCompanyId: company.promotionCriteria.nextCompanyId,
+      nextCompany: getCompanyById(company.promotionCriteria.nextCompanyId),
+    };
+  };
 
   const startTask = (taskId) => {
     setTaskStates(prev => ({
@@ -99,6 +124,8 @@ export function TaskProvider({ children }) {
     }
 
     const newStatus = passed ? 'completed' : 'needs-revision';
+    let unlockedNextCompany = false;
+    let nextCompany = null;
 
     setTaskStates(prev => {
       const updated = {
@@ -130,12 +157,23 @@ export function TaskProvider({ children }) {
             updated[nextId] = { ...updated[nextId], status: 'available' };
           }
         }
+
+        // Check if completing this task unlocks the next company tier
+        const currentCompany = getCompanyForTask(taskId);
+        if (currentCompany) {
+          const promo = checkPromotionEligibility(currentCompany.id, updated);
+          if (promo.eligible) {
+            unlockedNextCompany = true;
+            nextCompany = promo.nextCompany;
+            if (unlockCompany) unlockCompany(promo.nextCompanyId);
+          }
+        }
       }
 
       return updated;
     });
 
-    return { passed, xpEarned, isLate, timeTaken };
+    return { passed, xpEarned, isLate, timeTaken, unlockedNextCompany, nextCompany };
   };
 
   const retryTask = (taskId) => {
@@ -197,6 +235,7 @@ export function TaskProvider({ children }) {
     <TaskContext.Provider value={{
       taskStates,
       getTaskState,
+      checkPromotionEligibility,
       startTask,
       updateCode,
       submitTask,
@@ -207,6 +246,7 @@ export function TaskProvider({ children }) {
       getActiveTask,
       resetTasks,
       TASKS,
+      COMPANIES,
     }}>
       {children}
     </TaskContext.Provider>

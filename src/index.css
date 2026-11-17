@@ -9,57 +9,57 @@
 
 /* ========== THEME VARIABLES ========== */
 :root {
-  /* Dark Theme (Default) — Orange + Black */
-  --bg-primary: #0D0D0D;
-  --bg-secondary: #141414;
-  --bg-tertiary: #1A1A1A;
-  --bg-card: #1E1E1E;
-  --bg-card-hover: #252525;
-  --bg-elevated: #2A2A2A;
-  --bg-input: #1A1A1A;
-  --bg-sidebar: #111111;
+  /* Dark Theme (Default) — Linear / Vercel Inspired Obsidian-Zinc */
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f13;
+  --bg-tertiary: #141418;
+  --bg-card: #121216;
+  --bg-card-hover: #17171d;
+  --bg-elevated: #18181f;
+  --bg-input: #101014;
+  --bg-sidebar: #0c0c0f;
 
-  --accent: #FF6B2C;
-  --accent-hover: #FF8347;
-  --accent-muted: rgba(255, 107, 44, 0.15);
-  --accent-gradient: linear-gradient(135deg, #FF6B2C 0%, #FF9A5C 100%);
-  --accent-glow: 0 0 20px rgba(255, 107, 44, 0.3);
+  --accent: #6366F1;
+  --accent-hover: #4F46E5;
+  --accent-muted: rgba(99, 102, 241, 0.12);
+  --accent-gradient: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+  --accent-glow: 0 0 24px rgba(99, 102, 241, 0.25);
 
-  --text-primary: #F5F5F5;
-  --text-secondary: #A0A0A0;
-  --text-tertiary: #666666;
-  --text-accent: #FF6B2C;
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-accent: #818CF8;
 
-  --border: #2A2A2A;
-  --border-hover: #3A3A3A;
-  --border-accent: rgba(255, 107, 44, 0.3);
+  --border: #27272A;
+  --border-hover: #3F3F46;
+  --border-accent: rgba(99, 102, 241, 0.3);
 
-  --success: #34D399;
-  --success-bg: rgba(52, 211, 153, 0.1);
-  --warning: #FBBF24;
-  --warning-bg: rgba(251, 191, 36, 0.1);
-  --danger: #F87171;
-  --danger-bg: rgba(248, 113, 113, 0.1);
-  --info: #60A5FA;
-  --info-bg: rgba(96, 165, 250, 0.1);
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.12);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 30px rgba(255, 107, 44, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
 
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  --sidebar-width: 260px;
+  --sidebar-width: 250px;
   --sidebar-collapsed: 72px;
-  --header-height: 64px;
+  --header-height: 60px;
 
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
@@ -1414,4 +1414,178 @@ textarea.input {
 
 .md-content li {
   margin-bottom: 4px;
+}
+
+/* ========== VOICE MODE ========== */
+.voice-pulse {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--danger);
+  animation: voicePulse 1s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+}
+
+.voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 20px;
+}
+
+.voice-wave span {
+  display: block;
+  width: 3px;
+  background: var(--accent);
+  border-radius: var(--radius-full);
+  animation: voiceWave 0.8s ease-in-out infinite;
+}
+
+.voice-wave span:nth-child(1) { animation-delay: 0s; height: 8px; }
+.voice-wave span:nth-child(2) { animation-delay: 0.1s; height: 14px; }
+.voice-wave span:nth-child(3) { animation-delay: 0.2s; height: 10px; }
+.voice-wave span:nth-child(4) { animation-delay: 0.3s; height: 16px; }
+.voice-wave span:nth-child(5) { animation-delay: 0.4s; height: 8px; }
+
+@keyframes voiceWave {
+  0%, 100% { transform: scaleY(0.5); }
+  50% { transform: scaleY(1.2); }
+}
+
+
+/* ========== SAAS AUTHENTICATION STYLES ========== */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 65%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+  position: relative;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  animation: fadeInUp 0.25s ease;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+}
+
+.auth-header h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.auth-header p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.auth-demo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px dashed var(--accent-muted);
+  border-radius: var(--radius-md);
+  color: var(--text-accent);
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all var(--transition-fast);
+}
+
+.auth-demo-badge:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent);
+}
+
+.auth-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  color: #fca5a5;
+  font-size: 0.82rem;
+  margin-bottom: 16px;
+  animation: shake 0.3s ease;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+}
+
+.auth-footer a {
+  color: var(--text-accent);
+  font-weight: 600;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.input-with-icon .input {
+  padding-left: 38px;
 }

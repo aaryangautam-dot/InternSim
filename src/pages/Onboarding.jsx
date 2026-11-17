@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
+import { getManagerForRole } from '../data/managers';
 import { Monitor, Server, Brain, ChevronRight, Zap, Sparkles } from 'lucide-react';
 
 const ROLES = [
@@ -65,7 +66,7 @@ export default function Onboarding() {
             <p className="subtitle">Assigning you to NovaTech Engineering Team</p>
             <div className="spinner spinner-lg" style={{ margin: '32px auto' }} />
             <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
-              Your manager Priya Sharma will brief you shortly.
+              Your manager <strong>{getManagerForRole(role).name}</strong> will brief you shortly.
             </p>
           </div>
         ) : step === 0 ? (

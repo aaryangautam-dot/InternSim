@@ -1,24 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/auth';
 
 const UserContext = createContext();
-
-const DEFAULT_USER = {
-  name: '',
-  role: '',
-  skillLevel: '',
-  rank: 'Intern',
-  xp: 0,
-  streak: 0,
-  lastActiveDate: null,
-  joinDate: null,
-  warnings: 0,
-  terminated: false,
-  onboarded: false,
-  hasSeenBriefing: false,
-  totalTasksCompleted: 0,
-  totalTimeTaken: 0,
-  averageRating: 0,
-};
 
 const RANKS = [
   { name: 'Intern', minXp: 0 },
@@ -34,62 +17,88 @@ function calculateRank(xp) {
   return rank;
 }
 
-function calculateStreak(lastActiveDate) {
-  if (!lastActiveDate) return 0;
-  const last = new Date(lastActiveDate);
-  const today = new Date();
-  const diffDays = Math.floor((today - last) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 1) return -1; // -1 = keep current streak
-  return 0; // reset
-}
-
 export function UserProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('internsim-user');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const streakResult = calculateStreak(parsed.lastActiveDate);
-      if (streakResult === 0) parsed.streak = 0;
-      return parsed;
-    }
-    return DEFAULT_USER;
-  });
+  const [session, setSession] = useState(() => authService.getCurrentSession());
+  const user = session?.user || null;
 
   useEffect(() => {
-    localStorage.setItem('internsim-user', JSON.stringify(user));
-  }, [user]);
+    const handleStorage = () => {
+      setSession(authService.getCurrentSession());
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
-  const updateUser = (updates) => {
-    setUser(prev => {
-      const next = { ...prev, ...updates };
-      next.rank = calculateRank(next.xp);
-      return next;
-    });
+  const login = async (identity, password) => {
+    const newSession = await authService.login({ identity, password });
+    setSession(newSession);
+    return newSession.user;
   };
 
-  const completeOnboarding = (name, role, skillLevel) => {
-    updateUser({
-      name,
-      role,
-      skillLevel,
-      onboarded: true,
-      joinDate: new Date().toISOString(),
-      lastActiveDate: new Date().toISOString(),
-      streak: 1,
-    });
+  const register = async (formData) => {
+    const newSession = await authService.register(formData);
+    setSession(newSession);
+    return newSession.user;
+  };
+
+  const logout = () => {
+    authService.logout();
+    setSession(null);
+  };
+
+  const updateUser = async (updates) => {
+    if (!user) return;
+    const nextUser = { ...user, ...updates };
+    if (typeof nextUser.xp === 'number') {
+      nextUser.rank = calculateRank(nextUser.xp);
+    }
+    const updated = await authService.updateProfile(nextUser);
+    setSession(prev => prev ? { ...prev, user: updated } : null);
   };
 
   const addXp = (amount) => {
-    updateUser({ xp: user.xp + amount });
+    if (!user) return;
+    updateUser({ xp: (user.xp || 0) + amount });
   };
 
   const addWarning = () => {
-    const newWarnings = user.warnings + 1;
+    if (!user) return;
+    const newWarnings = (user.warnings || 0) + 1;
     const terminated = newWarnings >= 3;
     updateUser({ warnings: newWarnings, terminated });
   };
 
+  const switchCompany = (companyId) => {
+    updateUser({ currentCompanyId: companyId });
+  };
+
+  const unlockCompany = (companyId) => {
+    if (!user) return;
+    const current = user.unlockedCompanies || ['novatech'];
+    if (!current.includes(companyId)) {
+      updateUser({ unlockedCompanies: [...current, companyId] });
+    }
+  };
+
+  const signOfferLetter = (companyId) => {
+    if (!user) return;
+    const unlocked = (user.unlockedCompanies || ['novatech']).includes(companyId)
+      ? user.unlockedCompanies
+      : [...(user.unlockedCompanies || ['novatech']), companyId];
+
+    const signed = (user.signedOfferLetters || ['novatech']).includes(companyId)
+      ? user.signedOfferLetters
+      : [...(user.signedOfferLetters || ['novatech']), companyId];
+
+    updateUser({
+      currentCompanyId: companyId,
+      unlockedCompanies: unlocked,
+      signedOfferLetters: signed,
+    });
+  };
+
   const recordActivity = () => {
+    if (!user) return;
     const today = new Date().toDateString();
     const lastDate = user.lastActiveDate ? new Date(user.lastActiveDate).toDateString() : null;
     if (lastDate !== today) {
@@ -98,16 +107,26 @@ export function UserProvider({ children }) {
       const isConsecutive = lastDate === yesterday.toDateString();
       updateUser({
         lastActiveDate: new Date().toISOString(),
-        streak: isConsecutive ? user.streak + 1 : 1,
+        streak: isConsecutive ? (user.streak || 0) + 1 : 1,
       });
     }
   };
 
   const resetProgress = () => {
-    setUser(DEFAULT_USER);
-    localStorage.removeItem('internsim-user');
-    localStorage.removeItem('internsim-tasks');
-    localStorage.removeItem('internsim-chat');
+    if (user) {
+      updateUser({
+        xp: 0,
+        warnings: 0,
+        terminated: false,
+        totalTasksCompleted: 0,
+        totalTimeTaken: 0,
+        currentCompanyId: 'novatech',
+        unlockedCompanies: ['novatech'],
+        signedOfferLetters: ['novatech'],
+      });
+      localStorage.removeItem('internsim-tasks');
+      localStorage.removeItem('internsim-chat');
+    }
   };
 
   const markBriefingSeen = () => {
@@ -117,10 +136,17 @@ export function UserProvider({ children }) {
   return (
     <UserContext.Provider value={{
       user,
+      isAuthenticated: !!user,
+      token: session?.token,
+      login,
+      register,
+      logout,
       updateUser,
-      completeOnboarding,
       addXp,
       addWarning,
+      switchCompany,
+      unlockCompany,
+      signOfferLetter,
       recordActivity,
       resetProgress,
       markBriefingSeen,

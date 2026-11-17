@@ -1,35 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useUser } from '../contexts/UserContext';
 import { useTasks } from '../contexts/TaskContext';
 import {
-  LayoutDashboard, ListChecks, MessageSquare, TrendingUp,
-  Settings, Sun, Moon, Zap, Menu, X
+  Kanban, ListTodo, MessageSquareCode, Award,
+  Settings, Sun, Moon, Zap, Menu, X, ShieldAlert, LogOut
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/tasks', icon: ListChecks, label: 'Tasks' },
-  { to: '/chat', icon: MessageSquare, label: 'Messages' },
-  { to: '/progress', icon: TrendingUp, label: 'Progress' },
+  { to: '/dashboard', icon: Kanban, label: 'Sprint Board' },
+  { to: '/tasks', icon: ListTodo, label: 'Tickets' },
+  { to: '/chat', icon: MessageSquareCode, label: 'Team Slack' },
+  { to: '/progress', icon: Award, label: 'Career Dossier' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Layout({ children }) {
   const { theme, toggleTheme } = useTheme();
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const { getCompletedCount, TASKS: allTasks } = useTasks();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
-
   const pageTitle = NAV_ITEMS.find(n => location.pathname.startsWith(n.to))?.label
-    || (location.pathname.includes('/task/') ? 'Task' : 'InternSim');
+    || (location.pathname.includes('/task/') ? 'Code Review & Ticket' : 'NovaTech Engineering OS');
 
   return (
     <div className="app-layout">
@@ -42,39 +37,58 @@ export default function Layout({ children }) {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
-          <div className="logo-icon">
-            <Zap size={20} />
+          <div className="logo-icon" style={{ background: 'var(--accent-gradient)' }}>
+            <Zap size={20} color="#fff" />
           </div>
-          <h1>InternSim</h1>
+          <div>
+            <h1 style={{ fontSize: '1.05rem', margin: 0, fontWeight: 700 }}>NovaTech</h1>
+            <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Engineering OS
+            </span>
+          </div>
         </div>
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            >
-              <Icon className="nav-icon" size={20} />
-              <span>{label}</span>
-              {label === 'Tasks' && (
-                <span className="nav-badge">
-                  {getCompletedCount()}/{allTasks.length}
-                </span>
-              )}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              >
+                <Icon className="nav-icon" size={18} />
+                <span>{item.label}</span>
+                {item.label === 'Tickets' && (
+                  <span className="nav-badge">
+                    {getCompletedCount()}/{allTasks.length}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <div className="user-avatar">
-              {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+          <div className="sidebar-user" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+            <div className="user-avatar" style={{ background: 'var(--accent)' }}>
+              {user?.name ? user.name.charAt(0).toUpperCase() : '?'}
             </div>
-            <div className="user-info">
-              <div className="user-name">{user.name || 'Intern'}</div>
-              <div className="user-role">{user.rank} · {user.xp} XP</div>
+            <div className="user-info" style={{ flex: 1, minWidth: 0 }}>
+              <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.name || 'Intern Engineer'}
+              </div>
+              <div className="user-role">{user?.rank || 'Intern'} · {user?.xp || 0} XP</div>
             </div>
+            <button
+              className="btn btn-ghost btn-icon"
+              onClick={logout}
+              title="Sign out of engineering account"
+              style={{ width: 28, height: 28, color: 'var(--text-tertiary)', flexShrink: 0 }}
+            >
+              <LogOut size={15} />
+            </button>
           </div>
         </div>
       </aside>
@@ -90,10 +104,20 @@ export default function Layout({ children }) {
             >
               {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-            <h2>{pageTitle}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h2>{pageTitle}</h2>
+              <span className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>
+                Sprint 4 (Active)
+              </span>
+            </div>
           </div>
           <div className="topbar-right">
-            {user.streak > 0 && (
+            {user?.warnings > 0 && (
+              <span className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <ShieldAlert size={13} /> {user.warnings}/3 Performance Warnings
+              </span>
+            )}
+            {user?.streak > 0 && (
               <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 🔥 {user.streak} day streak
               </span>
